@@ -18,22 +18,22 @@ class SevenSegment:
 
     # Constructor
     def __init__(self, address=0x70, debug=False):
-        if (debug):
+        if debug:
             print "Initializing a new instance of LEDBackpack at 0x%02X" % address
         self.disp = LEDBackpack(address=address, debug=debug)
 
     def writeDigitRaw(self, charNumber, value):
         "Sets a digit using the raw 16-bit value"
-        if (charNumber > 7):
+        if charNumber > 7:
             return
             # Set the appropriate digit
         self.disp.setBufferRow(charNumber, value)
 
     def writeDigit(self, charNumber, value, dot=False):
         "Sets a single decimal or hexademical value (0..9 and A..F)"
-        if (charNumber > 7):
+        if charNumber > 7:
             return
-        if (value > 0xF):
+        if value > 0xF:
             return
             # Set the appropriate digit
         self.disp.setBufferRow(charNumber, self.digits[value] | (dot << 7))
@@ -43,7 +43,7 @@ class SevenSegment:
         # Warning: This function assumes that the colon is character '2',
         # which is the case on 4 char displays, but may need to be modified
         # if another display type is used
-        if (state):
+        if state:
             self.disp.setBufferRow(2, 0xFFFF)
         else:
             self.disp.setBufferRow(2, 0)
@@ -68,19 +68,19 @@ class SevenSegment:
         Write  any number between 9999 and .9999 to the display, adding a decimal point if necessary
         """
         if value > 999:
-            self.writeInt(value)
+            self.writeInt(value)                # No decimal is needed here
         elif value > 99:
             self.writeDigit(0, int(value / 100))
             self.writeDigit(1, (value / 10) % 10)
-            self.writeDigit(3, value % 10, True) #Add Decimal
+            self.writeDigit(3, value % 10, True)    # Add Decimal
             self.writeDigit(4, (value * 10) % 10)
         elif value > 9:
             self.writeDigit(0, int(value / 10))
-            self.writeDigit(1, value % 10, True)
+            self.writeDigit(1, value % 10, True)    # Add Decimal
             self.writeDigit(3, (value * 10) % 10)
             self.writeDigit(4, (value * 100 % 10))
         else:
-            self.writeDigit(0, int(value * 10), True)
+            self.writeDigit(0, int(value * 10), True)  # Add Decimal
             self.writeDigit(1, (value * 100) % 10)
             self.writeDigit(3, (value * 1000) % 10)
             self.writeDigit(4, (value * 10000) % 10)
