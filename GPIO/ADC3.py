@@ -64,10 +64,8 @@ def refresh(delay):
     global l
     global p
     global halt
+
     while True:
-        if halt:
-            GPIO.output(statusLED, False)
-            break
         GPIO.output(statusLED, True)                                # Status Led On
         l = movavg(light_Average, 4, analogRead(light_adc))         # Read the light sensor and calculate the average
         p = movavg(pot_Average, 3, analogRead(pot_adc))             # Read the pot and calculate the average
@@ -84,14 +82,15 @@ if __name__ == '__main__':
     while True:
         if GPIO.input(button) == False:     # This button controls what is displayed
             state += 1
-            time.sleep(.25)
-        if GPIO.input(kill) == False:       # This button kills the app and the refresh thread
-            halt = True
+            while GPIO.input(button) == False:
+                time.sleep(.1)
+        if GPIO.input(kill) == False:       # This button kills the app
             segment.writeInt(0)
+            GPIO.output(statusLED, False)
             quit()
         if state % 2 == 0:                  # Display the Pot data
             segment.writeInt(p)
-            segment.writeDigit(4, p % 10, True)
+            segment.writeDigit(4, p % 10, True)  # Turn on the last decimal to indicate that the Pot is being displayed
         if state % 2 == 1:                  # Display the Light Sensor Data
             segment.writeInt(l)
             segment.writeDigit(4, p % 10, False)
