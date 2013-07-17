@@ -4,18 +4,20 @@
 import time
 import spidev
 import RPi.GPIO as GPIO
-from Adafruit_LEDBackpack.Adafruit_7Segment import SevenSegment
+from lib.Char_Plate.Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
 import smbus
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
-segment = SevenSegment(address=0x70)  # which port the display is
+lcd = Adafruit_CharLCDPlate(busnum=0)
 spi = spidev.SpiDev()
-light_adc = 7
+light_adc = 1
 l = list()
-statusLED = 25
+statusLED = 23
 print "Press CTRL+Z to exit"
 GPIO.setup(statusLED, GPIO.OUT)
+lcd.backlight(lcd.ON)
+lcd.clear()
 
 
 def analogRead(port):
@@ -42,8 +44,10 @@ def movavg(ave_list, length, value):
 
 
 while True:
+    lcd.home()
     GPIO.output(statusLED, True)                                # Status Led On
-    segment.writeInt(movavg(l, 4, analogRead(light_adc)))       # Read analog value and send it to the display
-    time.sleep(.125)                                            # Wait a little
+    lcd.message('Light Sensor:\n' + str(
+        movavg(l, 4, analogRead(light_adc))) + '     ')   # Read analog value and send it to the display
+    time.sleep(.1)                                              # Wait a little
     GPIO.output(statusLED, False)                               # Status Led off
-    time.sleep(.175)                                            # Wait a bit longer
+    time.sleep(.155)                                            # Wait a bit longer

@@ -4,31 +4,30 @@
 import time
 import spidev
 import RPi.GPIO as GPIO
-from Adafruit_LEDBackpack.Adafruit_7Segment import SevenSegment
+from lib.Char_Plate.Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
 import smbus
-import threading
 
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
-segment = SevenSegment(address=0x70)  # which I2C address the display is
+lcd = Adafruit_CharLCDPlate(busnum=0)
 spi = spidev.SpiDev()
-light_adc = 7       # ADC
-pot_adc = 1         # ADC
-statusLED = 25
-button = 23                         # Toggles the display view
-kill = 17                           # Red kill switch
-state = 0                           # defines what value is displayed
+light_adc = 1       # ADC
+pot_adc = 0         # ADC
+statusLED = 23
+button = 25                         # Toggles the display view
+display = 0                         # defines what value is displayed
 light_Average = []                  # Average list used by the movavg function
 l = 0                               # display  value for the light sensor
 pot_Average = []                    # Average list used by the movavg function
 p = 0                               # display value for the pot
-rate = .175                         # The delay between refreshes + .125 seconds
-halt = False                        # When set true, the program stops
+rate = .1                           # The delay between refreshes + .125 seconds
 print "Press CTRL+Z to exit"
 GPIO.setup(button, GPIO.IN)
-GPIO.setup(kill, GPIO.IN)
 GPIO.setup(statusLED, GPIO.OUT)
+
+lcd.backlight(lcd.ON)
+lcd.clear()
 
 
 def analogRead(port):
@@ -56,43 +55,22 @@ def movavg(ave_list, length, value):
     return value / len(ave_list)
 
 
-def refresh(delay):
-    """
-    This function reads and averages the data form the ADC. In this example we have a light sensor and a potentiometer
-    connected, on port 7 and 1.
-    """
-    global l
-    global p
-    global halt
-
+if __name__ == '__main__':
     while True:
+        if lcd.buttonPressed(lcd.UP):
+            lcd.backlight(lcd.BLUE)
+        if lcd.buttonPressed(lcd.DOWN):
+            lcd.backlight(lcd.ON)
+        if lcd.buttonPressed(lcd.SELECT):
+            lcd.backlight(lcd.OFF)
+        if GPIO.input(button) == False:
+            lcd.backlight(lcd.GREEN)
+
         GPIO.output(statusLED, True)                                # Status Led On
         l = movavg(light_Average, 4, analogRead(light_adc))         # Read the light sensor and calculate the average
-        p = movavg(pot_Average, 3, analogRead(pot_adc))             # Read the pot and calculate the average
-        time.sleep(.125)                                            # Wait a little
+        time.sleep(rate)                                            # Wait a little
         GPIO.output(statusLED, False)                               # Status Led Off
-        time.sleep(delay)                                           # Wait the pre-set delay
-
-
-refresher = threading.Thread(target=refresh, args=[rate])           # Create the Refresher thread
-refresher.daemon = True
-
-if __name__ == '__main__':
-    refresher.start()       # Start the Refresher thread
-    while True:
-        if GPIO.input(button) == False:     # This button controls what is displayed
-            state += 1
-            while GPIO.input(button) == False:
-                time.sleep(.1)
-        if GPIO.input(kill) == False:       # This button kills the app
-            segment.writeInt(0)
-            GPIO.output(statusLED, False)
-            quit()
-        if state % 2 == 0:                  # Display the Pot data
-            segment.writeInt(p)
-            segment.writeDigit(4, p % 10, True)  # Turn on the last decimal to indicate that the Pot is being displayed
-        if state % 2 == 1:                  # Display the Light Sensor Data
-            segment.writeInt(l)
-            segment.writeDigit(4, p % 10, False)
-
+        time.sleep(rate)                                            # Wait the pre-set delay
+        lcd.home()
+        lcd.message('Pot: ' + str(analogRead(pot_adc)) + '         \nLight: ' + str(l) + '       ')
         time.sleep(rate)

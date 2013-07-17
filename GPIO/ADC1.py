@@ -3,13 +3,13 @@
 
 import time
 import spidev
-import os
 import RPi.GPIO as GPIO
 
+# This program reads an analogue value form a potentiometer attached to port 0 on the MCP3008 Chip
 
 spi = spidev.SpiDev()
-light_adc = 7
-statusLED = 25
+pot_adc = 0
+statusLED = 23
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
@@ -32,7 +32,7 @@ def analogRead(port):
 
 while True:
     GPIO.output(statusLED, True)   # Status Led On
-    print analogRead(light_adc)    # Print read value
+    print analogRead(pot_adc)    # Print read value
     time.sleep(.125)               # Wait a little
     GPIO.output(statusLED, False)  # Status Led Off
     time.sleep(.175)               # Wait a bit longer
