@@ -7,10 +7,9 @@ import RPi.GPIO as GPIO
 from lib.Char_Plate.Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
 import smbus
 
-
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
-lcd = Adafruit_CharLCDPlate(busnum=0)
+lcd = Adafruit_CharLCDPlate()
 spi = spidev.SpiDev()
 light_adc = 1       # ADC
 pot_adc = 0         # ADC
@@ -57,13 +56,14 @@ def movavg(ave_list, length, value):
 
 if __name__ == '__main__':
     while True:
+        # Change the Back-light based on what button has been pressed
         if lcd.buttonPressed(lcd.UP):
             lcd.backlight(lcd.BLUE)
         if lcd.buttonPressed(lcd.DOWN):
             lcd.backlight(lcd.ON)
         if lcd.buttonPressed(lcd.SELECT):
             lcd.backlight(lcd.OFF)
-        if GPIO.input(button) == False:
+        if GPIO.input(button):
             lcd.backlight(lcd.GREEN)
 
         GPIO.output(statusLED, True)                                # Status Led On
@@ -71,6 +71,6 @@ if __name__ == '__main__':
         time.sleep(rate)                                            # Wait a little
         GPIO.output(statusLED, False)                               # Status Led Off
         time.sleep(rate)                                            # Wait the pre-set delay
-        lcd.home()
-        lcd.message('Pot: ' + str(analogRead(pot_adc)) + '         \nLight: ' + str(l) + '       ')
-        time.sleep(rate)
+        lcd.home()                                                  # Tell the LCD to go back to the first character
+        lcd.message('Pot: ' + str(analogRead(pot_adc)) + '         \nLight: ' + str(l) + '       ')  # Print info
+        time.sleep(rate)                                            # Wait a little

@@ -5,7 +5,7 @@ import time
 import requests
 
 timeURL = 'http://json-time.appspot.com/time.json?tz='
-zone = 'America/Phoenix'
+zone = 'America/Los_Angeles'
 
 while True:
     r = requests.get(timeURL + zone)                # Get the requested data form the server

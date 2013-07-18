@@ -9,10 +9,10 @@ import smbus
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
-lcd = Adafruit_CharLCDPlate(busnum=0)
+lcd = Adafruit_CharLCDPlate()
 spi = spidev.SpiDev()
-light_adc = 1
-l = list()
+light_adc = 1       # ADC
+l = list()          # List for Light Sensor Averaging
 statusLED = 23
 print "Press CTRL+Z to exit"
 GPIO.setup(statusLED, GPIO.OUT)
@@ -44,10 +44,15 @@ def movavg(ave_list, length, value):
 
 
 while True:
-    lcd.home()
+    # Change the Back-light based on what button has been pressed
+    if lcd.buttonPressed(lcd.DOWN):
+        lcd.backlight(lcd.ON)
+    if lcd.buttonPressed(lcd.UP):
+        lcd.backlight(lcd.OFF)
+    lcd.home()                                                  # Tell the LCD to go back to the first character
     GPIO.output(statusLED, True)                                # Status Led On
     lcd.message('Light Sensor:\n' + str(
-        movavg(l, 4, analogRead(light_adc))) + '     ')   # Read analog value and send it to the display
+        movavg(l, 4, analogRead(light_adc))) + '     ')         # Read analog value and send it to the display
     time.sleep(.1)                                              # Wait a little
     GPIO.output(statusLED, False)                               # Status Led off
     time.sleep(.155)                                            # Wait a bit longer

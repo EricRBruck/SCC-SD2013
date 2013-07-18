@@ -7,7 +7,6 @@
 #
 
 from time import sleep
-from Adafruit_I2C import Adafruit_I2C
 from Adafruit_MCP230xx import Adafruit_MCP230XX
 import smbus
 
@@ -74,7 +73,6 @@ class Adafruit_CharLCDPlate:
     LCD_1LINE = 0x00
     LCD_5x10DOTS = 0x04
     LCD_5x8DOTS = 0x00
-
 
     def __init__(self, busnum=0, pin_rs=15, pin_e=13, pins_db=[12, 11, 10, 9], pin_rw=14):
         self.pin_rs = pin_rs
@@ -253,31 +251,31 @@ class Adafruit_CharLCDPlate:
 
     def buttonPressed(self, buttonname):
         if (buttonname > self.LEFT):
-            return false
+            return False
 
         return not self.mcp.input(buttonname)
 
 
 if __name__ == '__main__':
 
-    lcd = Adafruit_CharLCDPlate(busnum=0)
+    lcd = Adafruit_CharLCDPlate()
     lcd.clear()
     lcd.message("Adafruit RGB LCD\nPlate w/Keypad!")
     sleep(1)
     while 1:
-        if (lcd.buttonPressed(lcd.LEFT)):
+        if lcd.buttonPressed(lcd.LEFT):
             lcd.backlight(lcd.RED)
 
-        if (lcd.buttonPressed(lcd.UP)):
+        if lcd.buttonPressed(lcd.UP):
             lcd.backlight(lcd.BLUE)
 
-        if (lcd.buttonPressed(lcd.DOWN)):
+        if lcd.buttonPressed(lcd.DOWN):
             lcd.backlight(lcd.GREEN)
 
-        if (lcd.buttonPressed(lcd.RIGHT)):
+        if lcd.buttonPressed(lcd.RIGHT):
             lcd.backlight(lcd.VIOLET)
 
-        if (lcd.buttonPressed(lcd.SELECT)):
+        if lcd.buttonPressed(lcd.SELECT):
             lcd.backlight(lcd.ON)
 
     while 1:

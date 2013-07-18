@@ -6,3 +6,5 @@ The repository containing all the code used for the talk "Getting Started With R
 These examples are still being developed...
 
 For more info go to http://tompaulus.com/talks
+
+Session Info: http://www.socalcodecamp.com/socalcodecamp/session.aspx?sid=cce6941b-bc45-4505-bfe6-229953575715

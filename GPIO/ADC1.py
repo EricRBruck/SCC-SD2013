@@ -9,7 +9,7 @@ import RPi.GPIO as GPIO
 
 spi = spidev.SpiDev()
 pot_adc = 0
-statusLED = 23
+statusLED = 23          # GPIO port that our Status led is connected to
 
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
@@ -18,9 +18,9 @@ GPIO.setup(statusLED, GPIO.OUT)
 print "Press CTRL+Z to exit"
 
 
-def analogRead(port):
+def analogRead(port, bus=0, ce=0):
     """Read the given ADC port and preform the necessary shifting of bits"""
-    spi.open(0, 0)
+    spi.open(bus, ce)      # CE port that the MCP3008 is connected to
     if (port > 7) or (port < 0):
         print 'analogRead -- Port Error, Must use a port between 0 and 7'
         return -1
