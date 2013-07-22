@@ -11,11 +11,10 @@ spi = spidev.SpiDev()
 pot_adc = 0
 statusLED = 23          # GPIO port that our Status led is connected to
 
-GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(statusLED, GPIO.OUT)
 
-print "Press CTRL+Z to exit"
+print "Press CTRL+C to exit"
 
 
 def analogRead(port, bus=0, ce=0):
@@ -29,10 +28,16 @@ def analogRead(port, bus=0, ce=0):
     spi.close()
     return value
 
+try:
+    while True:
+        GPIO.output(statusLED, True)   # Status Led On
+        print analogRead(pot_adc)    # Print read value
+        time.sleep(.125)               # Wait a little
+        GPIO.output(statusLED, False)  # Status Led Off
+        time.sleep(.175)               # Wait a bit longer
 
-while True:
-    GPIO.output(statusLED, True)   # Status Led On
-    print analogRead(pot_adc)    # Print read value
-    time.sleep(.125)               # Wait a little
-    GPIO.output(statusLED, False)  # Status Led Off
-    time.sleep(.175)               # Wait a bit longer
+except KeyboardInterrupt:
+    GPIO.output(statusLED, False)
+
+finally:
+    GPIO.cleanup()

@@ -1,20 +1,19 @@
 #! /usr/bin/python
 #Written By Tom Paulus, @tompaulus, www.tompaulus.com
 
-import time
+from time import sleep
 import spidev
 import RPi.GPIO as GPIO
 from lib.Char_Plate.Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
 import smbus
 
-GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 lcd = Adafruit_CharLCDPlate()
 spi = spidev.SpiDev()
-light_adc = 1       # ADC
-l = list()          # List for Light Sensor Averaging
+pot_adc = 0         # ADC
+l = []              # List for Light Sensor Averaging
 statusLED = 23
-print "Press CTRL+Z to exit"
+print "Press CTRL+C to exit"
 GPIO.setup(statusLED, GPIO.OUT)
 lcd.backlight(lcd.ON)
 lcd.clear()
@@ -42,17 +41,26 @@ def movavg(ave_list, length, value):
         value += x
     return value / len(ave_list)
 
+try:
+    while True:
+        # Change the Back-light based on what button has been pressed
+        if lcd.buttonPressed(lcd.DOWN):
+            lcd.backlight(lcd.ON)
+        if lcd.buttonPressed(lcd.UP):
+            lcd.backlight(lcd.OFF)
+        lcd.home()                                                  # Tell the LCD to go back to the first character
+        GPIO.output(statusLED, True)                                # Status Led On
+        lcd.message('Potentiometer:\n' + str(
+            movavg(l, 4, analogRead(pot_adc))) + '     ')           # Read analog value and send it to the display
+        sleep(.1)                                                   # Wait a little
+        GPIO.output(statusLED, False)                               # Status Led off
+        sleep(.155)                                                 # Wait a bit longer
 
-while True:
-    # Change the Back-light based on what button has been pressed
-    if lcd.buttonPressed(lcd.DOWN):
-        lcd.backlight(lcd.ON)
-    if lcd.buttonPressed(lcd.UP):
-        lcd.backlight(lcd.OFF)
-    lcd.home()                                                  # Tell the LCD to go back to the first character
-    GPIO.output(statusLED, True)                                # Status Led On
-    lcd.message('Light Sensor:\n' + str(
-        movavg(l, 4, analogRead(light_adc))) + '     ')         # Read analog value and send it to the display
-    time.sleep(.1)                                              # Wait a little
-    GPIO.output(statusLED, False)                               # Status Led off
-    time.sleep(.155)                                            # Wait a bit longer
+except KeyboardInterrupt:
+    GPIO.output(statusLED, False)
+    spi.close()
+
+finally:
+    lcd.clear()
+    lcd.backlight(lcd.OFF)
+    GPIO.cleanup()

@@ -1,7 +1,7 @@
 #! /usr/bin/python
 #Written By Tom Paulus, @tompaulus, www.tompaulus.com
 
-import time
+from time import sleep
 import RPi.GPIO as GPIO
 
 GPIO.setmode(GPIO.BCM)
@@ -12,8 +12,17 @@ led = 21                    # GPIO Port to which the LED is connected
 delay = .5
 GPIO.setup(led, GPIO.OUT)   # Set 'led' as and Output
 
-while True:
-    GPIO.output(led, True)   # led On
-    time.sleep(delay)        # wait 'delay' seconds
-    GPIO.output(led, False)  # led Off
-    time.sleep(delay)        # wait another 'delay' seconds
+print "Press CTRL+C to exit"
+
+try:
+    while True:
+        GPIO.output(led, True)   # led On
+        sleep(delay)             # wait 'delay' seconds
+        GPIO.output(led, False)  # led Off
+        sleep(delay)             # wait another 'delay' seconds
+
+except KeyboardInterrupt:
+    GPIO.output(led, False)
+
+finally:
+    GPIO.cleanup()

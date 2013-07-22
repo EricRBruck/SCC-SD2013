@@ -1,31 +1,32 @@
 #! /usr/bin/python
 #Written By Tom Paulus, @tompaulus, www.tompaulus.com
 
-import time
+from time import sleep
 import spidev
 import RPi.GPIO as GPIO
 from lib.Char_Plate.Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
 import smbus
 
-GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
 lcd = Adafruit_CharLCDPlate()
 spi = spidev.SpiDev()
 light_adc = 1       # ADC
 pot_adc = 0         # ADC
 statusLED = 23
-button = 25                         # Toggles the display view
-display = 0                         # defines what value is displayed
+green = 25                          # Makes the LCD Green
 light_Average = []                  # Average list used by the movavg function
 l = 0                               # display  value for the light sensor
 pot_Average = []                    # Average list used by the movavg function
 p = 0                               # display value for the pot
 rate = .1                           # The delay between refreshes + .125 seconds
-print "Press CTRL+Z to exit"
-GPIO.setup(button, GPIO.IN)
+bounce = 400
+color = lcd.ON
+print "Press CTRL+C to exit"
+
+GPIO.setup(green, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(statusLED, GPIO.OUT)
 
-lcd.backlight(lcd.ON)
+lcd.backlight(color)
 lcd.clear()
 
 
@@ -54,23 +55,37 @@ def movavg(ave_list, length, value):
     return value / len(ave_list)
 
 
-if __name__ == '__main__':
-    while True:
-        # Change the Back-light based on what button has been pressed
-        if lcd.buttonPressed(lcd.UP):
-            lcd.backlight(lcd.BLUE)
-        if lcd.buttonPressed(lcd.DOWN):
-            lcd.backlight(lcd.ON)
-        if lcd.buttonPressed(lcd.SELECT):
-            lcd.backlight(lcd.OFF)
-        if GPIO.input(button):
-            lcd.backlight(lcd.GREEN)
+def colorChange(channel):
+    global color
+    if channel == green:
+        if color == lcd.ON:
+            color = lcd.GREEN
+        elif color == lcd.GREEN:
+            color = lcd.OFF
+        else:
+            color = lcd.ON
+    for i in range(3):
+        lcd.backlight(color)
+        sleep(.01)
+    sleep(bounce/1000)
 
+
+try:
+    GPIO.add_event_detect(green, GPIO.RISING, callback=colorChange, bouncetime=bounce)
+
+    while True:
         GPIO.output(statusLED, True)                                # Status Led On
         l = movavg(light_Average, 4, analogRead(light_adc))         # Read the light sensor and calculate the average
-        time.sleep(rate)                                            # Wait a little
-        GPIO.output(statusLED, False)                               # Status Led Off
-        time.sleep(rate)                                            # Wait the pre-set delay
         lcd.home()                                                  # Tell the LCD to go back to the first character
         lcd.message('Pot: ' + str(analogRead(pot_adc)) + '         \nLight: ' + str(l) + '       ')  # Print info
-        time.sleep(rate)                                            # Wait a little
+        GPIO.output(statusLED, False)                               # Status Led Off
+        sleep(rate)                                                 # Wait a little
+
+except KeyboardInterrupt:
+    GPIO.output(statusLED, False)
+    spi.close()
+
+finally:
+    lcd.clear()
+    lcd.backlight(lcd.OFF)
+    GPIO.cleanup()
