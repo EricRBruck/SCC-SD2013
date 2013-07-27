@@ -6,6 +6,7 @@ import WUndergroundAPI
 import time
 import smbus
 import os
+import RPi.GPIO as GPIO   # For Demo Only
 
 locations = {}
 version = 0
@@ -18,6 +19,8 @@ API = WUndergroundAPI.WebAPI()
 lcd.clear()
 lcd.backlight(lcd.ON)
 
+GPIO.setmode(GPIO.BCM)     # For Demo Only
+GPIO.setup(25, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)     # For Demo Only
 try:
     info = open(LocationData)
     data = info.readlines()
@@ -90,7 +93,7 @@ def init():
     lcd.message('Weather Client\nfor Raspberry Pi')
     time.sleep(1)
     lcd.clear()
-    lcd.message('Version 1.0\nTom Paulus 2013')
+    lcd.message('Version 1.5-CC\nTom Paulus 2013')
     time.sleep(1)
     lcd.clear()
 
@@ -118,7 +121,7 @@ def locationChanger(origin, locations, location):
             stateFull = API.USCode(stateRAW)
             cityRAW = locations.get(str(location) + 'c')
             cityFull = cityRAW.replace('_', ' ')
-            locationStr = cityRAW + '\n' + stateFull
+            locationStr = cityFull + ',\n' + stateFull
             lcd.message(locationStr)
             blankScreen = False
             time.sleep(.2)
@@ -148,61 +151,70 @@ def wait(button):
         time.sleep(.1)
 
 
+def lcdOff(channel):     # For Demo Only
+    if channel == 25:
+        lcd.backlight(lcd.OFF)
+
 init()
 
-while True:
-
-    if update:
-        lcd.clear()
-        lcd.message('Please Wait\nFetching Data')
-        json = API.getLocation(locations.get(str(location) + 's'), locations.get(str(location) + 'c'), token)
-        update = False
-        display = 0
-
-    if display == 0:
-        lcd.clear()
-        high = API.high(json, units_Temp)
-        low = API.low(json, units_Temp)
-        windSpeed = API.windSpeed(json, units_Speed)
-        windDir = API.winDir(json)
-        string1 = API.Display1(high, low, windSpeed, units_Speed, windDir, language)
-        lcd.message(string1)
-
-    if display == 1:
-        lcd.clear()
-        rain = API.rain(json)
-        humidity = API.humidity(json)
-        string2 = API.Display2(rain, humidity, language)
-        lcd.message(string2)
-
-    if display == 2:
-        lcd.clear()
-        lcd.message('More Data\nComing Soon!')
-
+try:
+    GPIO.add_event_detect(25, GPIO.RISING, callback=lcdOff, bouncetime=300)     # For Demo Only
     while True:
-        if lcd.buttonPressed(lcd.DOWN):
-            display = (display + 1) % displayCount
-            break
+        if update:
+            lcd.clear()
+            lcd.message('Please Wait\nFetching Data')
+            json = API.getLocation(locations.get(str(location) + 's'), locations.get(str(location) + 'c'), token)
+            update = False
+            display = 0
 
-        if lcd.buttonPressed(lcd.UP):
-            display = (display - 1) % displayCount
-            break
+        if display == 0:
+            lcd.clear()
+            high = API.high(json, units_Temp)
+            low = API.low(json, units_Temp)
+            windSpeed = API.windSpeed(json, units_Speed)
+            windDir = API.winDir(json)
+            string1 = API.Display1(high, low, windSpeed, units_Speed, windDir, language)
+            lcd.message(string1)
 
-        if lcd.buttonPressed(lcd.LEFT):
-            location = locationChanger('left', locations, location)
+        if display == 1:
+            lcd.clear()
+            rain = API.rain(json)
+            humidity = API.humidity(json)
+            string2 = API.Display2(rain, humidity, language)
+            lcd.message(string2)
+
+        if display == 2:
+            lcd.clear()
+            lcd.message('More Data\nComing Soon!')
+
+        while True:
+            if lcd.buttonPressed(lcd.DOWN):
+                display = (display + 1) % displayCount
+                break
+
+            if lcd.buttonPressed(lcd.UP):
+                display = (display - 1) % displayCount
+                break
+
+            if lcd.buttonPressed(lcd.LEFT):
+                location = locationChanger('left', locations, location)
+                update = True
+                break
+                #            Jump to location Menu Function
+
+            if lcd.buttonPressed(lcd.RIGHT):
+                location = locationChanger('right', locations, location)
+                update = True
+                break
+                #            Jump to location Menu Function
+        if not update:
+            pause += 1
+        else:
+            pause = 0
+        if pause > 10:
             update = True
-            break
-            #            Jump to location Menu Function
+        time.sleep(.25)
 
-        if lcd.buttonPressed(lcd.RIGHT):
-            location = locationChanger('right', locations, location)
-            update = True
-            break
-            #            Jump to location Menu Function
-    if not update:
-        pause += 1
-    else:
-        pause = 0
-    if pause > 10:
-        update = True
-    time.sleep(.25)
+except KeyboardInterrupt:
+    lcd.clear()
+    lcd.backlight(lcd.OFF)
